@@ -15,8 +15,11 @@ jobs:
           import json, urllib.request, urllib.error
           base='https://edgeever.vjtaex.workers.dev'
           pw=r"""${{ github.event.inputs.password }}"""
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
           def req(path, method='GET', data=None):
               r=urllib.request.Request(base+path, method=method)
+              r.add_header('User-Agent',UA)
+              r.add_header('Accept','*/*')
               if data is not None:
                   r.add_header('Content-Type','application/json')
                   r.data=json.dumps(data).encode()
