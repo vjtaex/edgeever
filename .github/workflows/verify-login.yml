@@ -37,7 +37,7 @@ jobs:
           allp=sorted(spec.get('paths',{}).keys())
           print('all_paths:',json.dumps(allp))
           paths=[p for p in allp if 'login' in p.lower() or 'auth' in p.lower() or 'session' in p.lower()]
-          if not paths: paths=['/api/login','/api/auth/login','/api/session']
+          if not paths: paths=['/api/v1/auth/login']
           print('auth_paths:',json.dumps(paths))
           for p in paths:
               ms=spec.get('paths',{}).get(p,{'post':{}})
