@@ -30,15 +30,22 @@ jobs:
                   return e.code, e.read().decode()[:600]
           s,b=req('/api/health'); print('health:',s,b)
           s,b=req('/api/openapi.json'); print('openapi_status:',s)
+          print('openapi_head:',b[:700].replace(chr(10),' '))
           spec={}
           try: spec=json.loads(b)
           except Exception: print('openapi_parse_fail:',b[:200])
           allp=sorted(spec.get('paths',{}).keys())
           print('all_paths:',json.dumps(allp))
           paths=[p for p in allp if 'login' in p.lower() or 'auth' in p.lower() or 'session' in p.lower()]
+          if not paths: paths=['/api/login','/api/auth/login','/api/session']
           print('auth_paths:',json.dumps(paths))
           for p in paths:
-              for m in spec['paths'][p]:
+              ms=spec.get('paths',{}).get(p,{'post':{}})
+              for m in ms:
                   if m.upper()=='GET': continue
                   st,body=req(p, m.upper(), {'username':'admin','password':pw})
                   print('LOGIN_TRY',m.upper(),p,'->',st,body[:250])
+          if not paths:
+              for p in ['/api/login','/api/auth/login']:
+                  st,body=req(p,'POST',{'username':'admin','password':pw})
+                  print('FALLBACK_LOGIN',p,'->',st,body[:250])
