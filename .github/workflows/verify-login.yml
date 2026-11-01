@@ -1,0 +1,39 @@
+name: Verify EdgeEver login (temporary)
+on:
+  workflow_dispatch:
+    inputs:
+      password:
+        description: admin password
+        required: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe and login
+        shell: python
+        run: |
+          import json, urllib.request, urllib.error
+          base='https://edgeever.vjtaex.workers.dev'
+          pw=r"""${{ github.event.inputs.password }}"""
+          def req(path, method='GET', data=None):
+              r=urllib.request.Request(base+path, method=method)
+              if data is not None:
+                  r.add_header('Content-Type','application/json')
+                  r.data=json.dumps(data).encode()
+              try:
+                  with urllib.request.urlopen(r, timeout=30) as resp:
+                      return resp.status, resp.read().decode()[:600]
+              except urllib.error.HTTPError as e:
+                  return e.code, e.read().decode()[:600]
+          s,b=req('/api/health'); print('health:',s,b)
+          s,b=req('/api/openapi.json'); print('openapi_status:',s)
+          spec={}
+          try: spec=json.loads(b)
+          except Exception: pass
+          paths=[p for p in spec.get('paths',{}) if 'login' in p.lower() or 'auth' in p.lower() or 'session' in p.lower()]
+          print('auth_paths:',json.dumps(paths))
+          for p in paths:
+              for m in spec['paths'][p]:
+                  if m.upper()=='GET': continue
+                  st,body=req(p, m.upper(), {'username':'admin','password':pw})
+                  print('LOGIN_TRY',m.upper(),p,'->',st,body[:250])
